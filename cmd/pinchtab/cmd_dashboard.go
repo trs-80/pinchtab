@@ -59,6 +59,16 @@ func runDashboard(cfg *config.RuntimeConfig) {
 	orch.RegisterHandlers(mux)
 	profMgr.RegisterHandlers(mux)
 
+	// Root returns health check (API-first design)
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		web.JSON(w, 200, map[string]any{
+			"status":    "ok",
+			"mode":      "dashboard",
+			"dashboard": "/dashboard",
+			"docs":      "/api/docs",
+		})
+	})
+
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		web.JSON(w, 200, map[string]string{"status": "ok", "mode": "dashboard"})
 	})

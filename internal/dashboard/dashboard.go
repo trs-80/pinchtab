@@ -302,16 +302,17 @@ func (d *Dashboard) RegisterHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/agents", d.handleAgents)
 	mux.HandleFunc("GET /api/events", d.handleSSE)
 
-	// Static files served at /
+	// Static files served at /dashboard/
 	sub, _ := fs.Sub(dashboardFS, "dashboard")
 	fileServer := http.FileServer(http.FS(sub))
 
-	// Serve static assets
-	mux.Handle("GET /assets/", d.withNoCache(fileServer))
-	mux.Handle("GET /pinchtab-headed-192.png", d.withNoCache(fileServer))
+	// Serve static assets under /dashboard/
+	mux.Handle("GET /dashboard/assets/", http.StripPrefix("/dashboard", d.withNoCache(fileServer)))
+	mux.Handle("GET /dashboard/pinchtab-headed-192.png", http.StripPrefix("/dashboard", d.withNoCache(fileServer)))
 
-	// SPA: serve dashboard.html for all other routes
-	mux.Handle("GET /", d.withNoCache(http.HandlerFunc(d.handleDashboardUI)))
+	// SPA: serve dashboard.html for /dashboard
+	mux.Handle("GET /dashboard", d.withNoCache(http.HandlerFunc(d.handleDashboardUI)))
+	mux.Handle("GET /dashboard/", d.withNoCache(http.HandlerFunc(d.handleDashboardUI)))
 }
 
 func (d *Dashboard) handleAgents(w http.ResponseWriter, r *http.Request) {
