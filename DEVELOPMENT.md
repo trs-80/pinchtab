@@ -4,7 +4,7 @@
 
 - **Go 1.25+**
 - **Git**
-- **golangci-lint** (optional, for local linting)
+- **golangci-lint** (required for pre-commit hooks)
 
 ## Quick Start
 
@@ -56,13 +56,13 @@ Check your development environment anytime:
 
 This checks:
 - ✅ Go version (critical: 1.25+)
-- ⚠️  golangci-lint (recommended)
+- ✅ golangci-lint (critical: required for pre-commit)
 - ⚠️  Git hooks installed
 - ⚠️  Node.js / Bun (for dashboard development)
 
-### 4. (Optional) Install golangci-lint
+### 4. Install golangci-lint (required)
 
-For local linting (recommended):
+Required for pre-commit hooks:
 
 ```bash
 # macOS/Linux
@@ -72,7 +72,7 @@ brew install golangci-lint
 go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 ```
 
-Without golangci-lint, commits will still work but won't check linting locally.
+The pre-commit hook will warn and allow commits without it, but CI will fail.
 
 ## Before Committing
 

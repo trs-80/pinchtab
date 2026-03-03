@@ -63,12 +63,12 @@ else
   check_critical "Go" "fail" "Go not found. Install from https://go.dev/dl/"
 fi
 
-# golangci-lint (warning)
+# golangci-lint (critical)
 if command -v golangci-lint &>/dev/null; then
   LINT_VERSION=$(golangci-lint --version 2>/dev/null | head -1 | awk '{print $4}')
-  check_warning "golangci-lint $LINT_VERSION" "ok"
+  check_critical "golangci-lint $LINT_VERSION" "ok"
 else
-  check_warning "golangci-lint" "fail" "Optional but recommended. Install: brew install golangci-lint"
+  check_critical "golangci-lint" "fail" "Required for pre-commit checks. Install: brew install golangci-lint or go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
 fi
 
 # Git hooks (warning)
