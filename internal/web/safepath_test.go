@@ -94,7 +94,7 @@ func TestSafePath_TempDir(t *testing.T) {
 	if err := os.MkdirAll(sibling, 0o755); err != nil {
 		t.Fatalf("setup sibling: %v", err)
 	}
-	defer os.RemoveAll(sibling)
+	defer func() { _ = os.RemoveAll(sibling) }()
 
 	t.Run("absolute sibling rejected", func(t *testing.T) {
 		_, err := SafePath(base, sibling)
