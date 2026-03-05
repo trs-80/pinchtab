@@ -154,4 +154,5 @@ export interface LaunchInstanceRequest {
   name?: string; // profile name
   mode?: string; // "headed" or empty for headless
   port?: string; // port number as string
+  extensionPaths?: string[]; // Chrome extension paths to load
 }

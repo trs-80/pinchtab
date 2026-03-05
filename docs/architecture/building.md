@@ -30,8 +30,8 @@ Guide to build PinchTab from source and contribute to the project.
 git clone https://github.com/pinchtab/pinchtab.git
 cd pinchtab
 
-# 2. Run doctor (verifies environment + auto-installs hooks/deps)
-./doctor.sh
+# 2. Run doctor (verifies environment, prompts before installing anything)
+./pdev doctor
 
 # 3. Build and run
 go build ./cmd/pinchtab
@@ -40,38 +40,32 @@ go build ./cmd/pinchtab
 
 **Example output:**
 ```
-🩺 Pinchtab Doctor
-Verifying and setting up development environment...
+  🦀 Pinchtab Doctor
+  Verifying and setting up development environment...
 
-━━━ Go Backend Requirements ━━━
+Go Backend
+  ✓ Go 1.26.0
+  ✗ golangci-lint
+    Required for pre-commit hooks and CI.
+    Install golangci-lint via brew? [y/N] y
+    ✓ golangci-lint installed
+  ✓ Git hooks
+  ✓ Go dependencies
 
-✅ Go 1.26.0
-✅ golangci-lint 2.9.0
-⚠️  Git hooks not installed
-   Installing git hooks...
-   ✅ Git hooks installed
-✅ Go dependencies
+Dashboard (React/TypeScript)
+  ✓ Node.js 22.15.1
+  · Bun not found
+    Optional — used for fast dashboard builds.
+    Install Bun? [y/N] n
+    curl -fsSL https://bun.sh/install | bash
 
-━━━ Dashboard Requirements (React/TypeScript) ━━━
+Summary
 
-✅ Node.js 22.22.0
-⚠️  Bun
-   Optional for dashboard. Install: curl -fsSL https://bun.sh/install | bash
-
-━━━ Summary ━━━
-
-✅ Setup complete! Auto-installed missing components.
-
-Next steps:
-  go build ./cmd/pinchtab     # Build pinchtab
-  go test ./...               # Run tests
+  · 1 warning(s)
 ```
 
-The `doctor.sh` script will:
-- ✅ Check Go 1.25+ (tells you to install if missing)
-- ✅ Check golangci-lint (tells you to install if missing)
-- 🔧 Auto-install git hooks
-- 🔧 Auto-download Go dependencies
+The doctor asks for confirmation before installing anything.
+If you decline, it shows the manual install command instead.
 
 ---
 
@@ -138,20 +132,21 @@ sudo yum install -y chromium
 
 ### Automated Setup
 
-After installing Go and golangci-lint, run:
+After cloning, run doctor to verify and set up your environment:
 
 ```bash
 git clone https://github.com/pinchtab/pinchtab.git
 cd pinchtab
-./doctor.sh
+./pdev doctor
 ```
 
-This verifies your environment and automatically:
-- Installs git hooks (gofmt + golangci-lint on commit)
-- Downloads Go modules
-- Checks for optional tools (Node/Bun for dashboard)
+Doctor checks your environment and **asks before installing** anything:
+- Go 1.25+ and golangci-lint (offers `brew install` or `go install`)
+- Git hooks (copies pre-commit hook)
+- Go dependencies (`go mod download`)
+- Node.js, Bun, and dashboard deps (optional, for dashboard development)
 
-You can run `./doctor.sh` anytime to verify or fix your environment.
+Run `./pdev doctor` anytime to verify or fix your environment.
 
 ---
 
@@ -236,44 +231,83 @@ go test ./... -v -coverprofile=coverage.out
 go tool cover -html=coverage.out           # View coverage
 ```
 
+### Developer Toolkit (`pdev`)
+
+All dev scripts are accessible through `./pdev`:
+
+```bash
+./pdev              # Interactive picker (uses gum if installed, numbered fallback)
+./pdev check        # Run a command directly
+./pdev test unit    # Subcommands supported
+./pdev --help       # List all commands
+```
+
+![pdev interactive menu](../media/pdev-menu.jpg)
+
+**Available commands:**
+
+| Command | Description |
+|---------|-------------|
+| `check` | All checks (Go + Dashboard) |
+| `check go` | Go checks only |
+| `check dashboard` | Dashboard checks only |
+| `check security` | Gosec security scan |
+| `check docs` | Validate docs JSON |
+| `test` | All tests (unit + integration) |
+| `test unit` | Unit tests only |
+| `test integration` | Integration tests only |
+| `build` | Build & run (default) |
+| `doctor` | Setup dev environment |
+| `hooks` | Install git hooks |
+
+For the fancy interactive picker, install [gum](https://github.com/charmbracelet/gum): `brew install gum`
+
+**Tip:** Add this to `~/.zshrc` to use `pdev` without `./`:
+```bash
+pdev() { if [ -x "./pdev" ]; then ./pdev "$@"; else echo "pdev not found in current directory"; return 1; fi }
+```
+
 ### Code Quality
 
 ```bash
+./pdev check              # Full pre-push checks (recommended)
 gofmt -w .                # Format code
 golangci-lint run         # Lint
-./doctor.sh               # Verify environment
+./pdev doctor             # Verify environment
 ```
 
 ### Git Hooks
 
-Git hooks are auto-installed by `./doctor.sh`. They run on every commit:
+Git hooks are installed by `./pdev doctor` (or `./scripts/install-hooks.sh`). They run on every commit:
 - `gofmt` — Format check
 - `golangci-lint` — Linting
+- `prettier` — Dashboard formatting
 
 To manually reinstall hooks:
 ```bash
-./scripts/install-hooks.sh
+./pdev hooks
 ```
 
 ### Development Workflow
 
 ```bash
-# 1. Create feature branch
+# 1. Setup (first time)
+./pdev doctor
+
+# 2. Create feature branch
 git checkout -b feat/my-feature
 
-# 2. Make changes
+# 3. Make changes
 # ... edit files ...
 
-# 3. Test
-go test ./...
+# 4. Run checks before pushing
+./pdev check
 
-# 4. Commit (hooks run automatically)
+# 5. Commit (hooks run automatically)
 git commit -m "feat: description"
 
-# 5. Push
+# 6. Push
 git push origin feat/my-feature
-
-# 6. Create PR on GitHub
 ```
 
 **Note:** Git hooks will automatically format and lint your code on commit. If checks fail, the commit is blocked.
@@ -347,8 +381,8 @@ This will tell you exactly what's missing or misconfigured.
 - Or: `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
 
 **"Git hooks not running on commit"**
-- Run: `./scripts/install-hooks.sh`
-- Or: `./doctor.sh` (auto-installs)
+- Run: `./pdev hooks`
+- Or: `./pdev doctor` (prompts to install)
 
 **"Chrome not found"**
 - Install Chromium: `brew install chromium` (macOS)
@@ -368,7 +402,7 @@ This will tell you exactly what's missing or misconfigured.
 ## Support
 
 Issues? Check:
-1. Run `./doctor.sh` first
+1. Run `./pdev doctor` first
 2. All dependencies installed and correct versions?
 3. Port 9867 available?
 4. Check logs: `tail -f pinchtab.log`
