@@ -47,9 +47,11 @@ end_test
 # ─────────────────────────────────────────────────────────────────
 start_test "LRU eviction: 3rd tab evicts least recently used"
 
-# Touch tab2 (make it recently used) by taking a snapshot
+# Touch tab2 (make it recently used) by taking a snapshot.
+# Sleep ensures LastUsed timestamps are clearly separated.
+sleep 1
 pt_get "/tabs/$TAB2/snapshot" > /dev/null
-sleep 0.5
+sleep 1
 
 # Tab 3: buttons page — should evict tab1 (LRU)
 pt_post /navigate -d "{\"url\":\"${FIXTURES_URL}/buttons.html\"}"
@@ -101,7 +103,12 @@ end_test
 # ─────────────────────────────────────────────────────────────────
 start_test "LRU eviction: continuous eviction works"
 
-# Open tab 4 — should evict tab2 (now LRU since tab3 was just created)
+# Touch tab3 to make it recently used, then open tab4
+sleep 1
+pt_get "/tabs/$TAB3/snapshot" > /dev/null
+sleep 1
+
+# Open tab 4 — should evict tab2 (LRU, not touched since creation)
 pt_post /navigate -d "{\"url\":\"${FIXTURES_URL}/table.html\"}"
 TAB4=$(echo "$RESULT" | jq -r '.tabId')
 assert_ok "open tab 4 (table) — triggers another eviction"
