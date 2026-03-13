@@ -25,8 +25,9 @@ var quickCmd = &cobra.Command{
 }
 
 var navCmd = &cobra.Command{
-	Use:   "nav <url>",
-	Short: "Navigate to URL",
+	Use:        "nav <url>",
+	Short:      "Navigate to URL (alias for open)",
+	Deprecated: "use 'open' instead",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := config.Load()
@@ -82,6 +83,38 @@ var screenshotCmd = &cobra.Command{
 		cfg := config.Load()
 		runCLIWith(cfg, func(client *http.Client, base, token string) {
 			browseractions.Screenshot(client, base, token, cmd)
+		})
+	},
+}
+
+var openCmd = &cobra.Command{
+	Use:   "open <url>",
+	Short: "Open a URL (navigates current tab or creates new)",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		cfg := config.Load()
+		runCLIWith(cfg, func(client *http.Client, base, token string) {
+			browseractions.Navigate(client, base, token, args[0], cmd)
+		})
+	},
+}
+
+var closeCmd = &cobra.Command{
+	Use:   "close [tabId]",
+	Short: "Close a tab",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		cfg := config.Load()
+		runCLIWith(cfg, func(client *http.Client, base, token string) {
+			tabID, _ := cmd.Flags().GetString("tab")
+			if len(args) > 0 {
+				tabID = args[0]
+			}
+			if tabID == "" {
+				fmt.Fprintln(os.Stderr, "error: specify a tab ID as argument or via --tab")
+				os.Exit(1)
+			}
+			browseractions.TabClose(client, base, token, tabID)
 		})
 	},
 }
@@ -273,6 +306,8 @@ var selectCmd = &cobra.Command{
 
 func init() {
 	quickCmd.GroupID = "browser"
+	openCmd.GroupID = "browser"
+	closeCmd.GroupID = "browser"
 	navCmd.GroupID = "browser"
 	snapCmd.GroupID = "browser"
 	clickCmd.GroupID = "browser"
@@ -369,6 +404,13 @@ func init() {
 	textCmd.Flags().Bool("raw", false, "Raw extraction mode")
 	textCmd.Flags().String("tab", "", "Tab ID")
 
+	openCmd.Flags().Bool("new-tab", false, "Open in new tab")
+	openCmd.Flags().Bool("block-images", false, "Block image loading")
+	openCmd.Flags().Bool("block-ads", false, "Block ads")
+	openCmd.Flags().String("tab", "", "Tab ID")
+
+	closeCmd.Flags().String("tab", "", "Tab ID")
+
 	navCmd.Flags().Bool("new-tab", false, "Open in new tab")
 	navCmd.Flags().Bool("block-images", false, "Block image loading")
 	navCmd.Flags().Bool("block-ads", false, "Block ads")
@@ -384,6 +426,8 @@ func init() {
 	evalCmd.Flags().String("tab", "", "Tab ID")
 
 	rootCmd.AddCommand(quickCmd)
+	rootCmd.AddCommand(openCmd)
+	rootCmd.AddCommand(closeCmd)
 	rootCmd.AddCommand(navCmd)
 	rootCmd.AddCommand(snapCmd)
 	rootCmd.AddCommand(clickCmd)
