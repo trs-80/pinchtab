@@ -16,7 +16,6 @@ export default function LoginPage() {
     (location.state as { from?: string } | null)?.from ||
     "/dashboard/monitoring";
 
-
   const handleSubmit: NonNullable<ComponentProps<"form">["onSubmit"]> = async (
     event,
   ) => {

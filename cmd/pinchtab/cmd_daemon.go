@@ -266,7 +266,7 @@ type commandRunner interface {
 type osCommandRunner struct{}
 
 func (r osCommandRunner) CombinedOutput(name string, arg ...string) ([]byte, error) {
-	return exec.Command(name, arg...).CombinedOutput()
+	return exec.Command(name, arg...).CombinedOutput() //nolint:gosec // G204: args are daemon manager controlled, not user input
 }
 
 type daemonEnvironment struct {

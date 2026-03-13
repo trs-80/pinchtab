@@ -53,7 +53,7 @@ func isPinchTabProcess(pid int) bool {
 	}
 	// On Linux/macOS, we can check the process name or args.
 	// A simple check is to see if the command contains "pinchtab".
-	cmd := exec.Command("ps", "-p", fmt.Sprintf("%d", pid), "-o", "args=")
+	cmd := exec.Command("ps", "-p", fmt.Sprintf("%d", pid), "-o", "args=") //nolint:gosec // G204: pid is an int, not user-controlled string
 	out, err := cmd.Output()
 	if err != nil {
 		return false
